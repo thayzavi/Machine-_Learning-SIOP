@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dashboard de Casos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f7fa;
+        }
+
+        .filtros {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .filtros label {
+            font-weight: bold;
+            color: #40516c;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .grafico-box {
+            flex: 1;
+            min-width: 400px;
+            max-width: 45vw;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #40516c;
+            margin-bottom: 30px;
+        }
+
+        select, input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard de Casos</h1>
+    <div class="filtros">
+        <label for="dataInicio">Período de:</label>
+        <input type="date" id="dataInicio" />
+        <label for="dataFim">até:</label>
+        <input type="date" id="dataFim" />
+    </div>
+
+    <div class="container">
+        <div class="grafico-box">
+            <h2>Gráfico de Casos</h2>
+            <div id="graficoRosca"></div>
+        </div>
+        <div class="grafico-box">
+            <h2>Distribuição de Idades</h2>
+            <div id="graficoDistribuicao"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
