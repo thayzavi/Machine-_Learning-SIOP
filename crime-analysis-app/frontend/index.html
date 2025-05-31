@@ -63,22 +63,33 @@
 <body>
     <h1>Dashboard de Casos</h1>
     <div class="filtros">
-        <label for="dataInicio">Período de:</label>
-        <input type="date" id="dataInicio" />
-        <label for="dataFim">até:</label>
-        <input type="date" id="dataFim" />
-    </div>
+    <label for="dataInicio">Período de:</label>
+    <input type="date" id="dataInicio" />
+    <label for="dataFim">até:</label>
+    <input type="date" id="dataFim" />
 
-    <div class="container">
-        <div class="grafico-box">
-            <h2>Gráfico de Casos</h2>
-            <div id="graficoRosca"></div>
-        </div>
-        <div class="grafico-box">
-            <h2>Distribuição de Idades</h2>
-            <div id="graficoDistribuicao"></div>
-        </div>
+    <label for="selectVariavel">Visualizar por:</label>
+    <select id="selectVariavel">
+        <option value="tipo_do_caso">Tipo de Caso</option>
+        <option value="localizacao">Localização</option>
+        <option value="vitima.etnia">Etnia da Vítima</option>
+    </select>
+</div>
+
+<div class="container">
+    <div class="grafico-box">
+        <h2>Gráfico de Casos</h2>
+        <div id="graficoRosca"></div>
     </div>
+    <div class="grafico-box">
+        <h2>Distribuição de Idades</h2>
+        <div id="graficoDistribuicao"></div>
+    </div>
+    <div class="grafico-box">
+        <h2>Importância das Features do Modelo</h2>
+        <div id="graficoModelo"></div>
+    </div>
+</div>
 
     <script src="script.js"></script>
 </body>

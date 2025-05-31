@@ -1,10 +1,12 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
-from flask import request, abort
 from pymongo import MongoClient
 from dataclasses import dataclass, asdict
 import random
 from datetime import datetime, timedelta
+import pickle
+import pandas as pd 
+
 
 app = Flask(__name__)
 CORS(app)
@@ -14,6 +16,20 @@ MONGO_URI = "mongodb://localhost:27017/"
 client = MongoClient(MONGO_URI)
 db = client["meu_banco"]
 colecao = db["meus_dados"]
+
+# Carregar o pipeline e o label encoder salvos
+model_pipeline = None
+model_label_encoder = None
+try:
+    with open("model.pkl", "rb") as f:
+        data = pickle.load(f)
+        model_pipeline = data["pipeline"]
+        model_label_encoder = data["label_encoder"]
+    print("Modelo de ML carregado com sucesso!")
+except FileNotFoundError:
+    print("Erro: model.pkl não encontrado. Execute train_model.py primeiro.")
+except Exception as e:
+    print(f"Erro ao carregar o modelo de ML: {e}")
 
 @dataclass
 class Vitima:
@@ -53,13 +69,6 @@ def gerar_dados_aleatorios(n=20):
         )
         casos.append(caso.to_dict())
     return casos
-
-if __name__ == "__main__":
-    if colecao.count_documents({}) == 0:
-        print("Inserindo dados iniciais...")
-        dados_iniciais = gerar_dados_aleatorios(20)
-        colecao.insert_many(dados_iniciais)
-    app.run(debug=True)
 
 def validar_caso_json(data):
     try:
@@ -111,6 +120,7 @@ def associacoes():
     documentos = list(colecao.find({}, {"_id": 0}))
     if not documentos:
         return jsonify({"message": "Sem dados na coleção"}), 400
+
     lista = []
     for d in documentos:
         vitima = d.get("vitima", {})
@@ -121,10 +131,11 @@ def associacoes():
             "tipo_do_caso": d.get("tipo_do_caso")
         })
     df = pd.DataFrame(lista).dropna()
+
     try:
-        X = df[["idade", "etnia", "localizacao"]]
-        # Placeholder para análise futura
-        return jsonify({"message": "Endpoint pronto para implementar análise"}), 200
+        x = df [["idade", "etnia", "localizacao"]]
+        # Placeholder para analise futura
+        return jsonify({"message": "Endpoint pronto para implementar analise"}), 200
     except Exception as e:
         return jsonify({"error": f"Erro ao processar modelo: {str(e)}"}), 500
 
@@ -132,9 +143,9 @@ def associacoes():
 def predizer():
     dados = request.get_json()
     if not dados or not all(k in dados for k in ("idade", "etnia", "localizacao")):
-        return jsonify({"erro": "JSON inválido. Esperando: idade, etnia, localizacao"}), 400
+        return jsonify({"erro": "JSON invalido. Esperado: idade, etnia, localizacao"}), 400
     try:
-        df = pd.DataFrame([dados])
+        df = pd.DataFrame ([dados])
         y_prob = modelo.predict_proba(df)[0]
         y_pred_encoded = modelo.predict(df)[0]
         y_pred = label_encoder.inverse_transform([y_pred_encoded])[0]
@@ -145,4 +156,42 @@ def predizer():
         }
         return jsonify(resultado), 200
     except Exception as e:
-        return jsonify({"erro": f"Erro ao fazer predição: {str(e)}"}),500
+        return jsonify({"erro": f"Erro ao fazer predição: {str(e)}"}), 500
+
+
+@app.route('/api/modelo/coeficientes', methods=['GET'])
+def coeficientes_modelo():
+    try:
+        # Verifica se o modelo está carregado
+        if not model_pipeline or not model_label_encoder:
+            return jsonify({"error": "Modelo de ML não carregado ou treinado."}), 500
+
+        # Pegando o pre-processador e o classificador XGBoost do pipeline
+        preprocessor = model_pipeline.named_steps['preprocessor']
+        classifier = model_pipeline.named_steps['classifier']
+
+        # Pegando nomes das features após o OneHotEncoding
+        cat_encoder = preprocessor.named_transformers_['cat']
+        cat_features = cat_encoder.get_feature_names_out(preprocessor.transformers_[0][2])
+        numeric_features = preprocessor.transformers_[1][2]
+        all_features = list(cat_features) + list(numeric_features) 
+        
+        # Pegando as importâncias de feature do XGBoost
+        importancias = classifier.feature_importances_
+
+        # Criando um dicionário com feature e sua importância
+        features_importances = {
+            feature: float(importance) # Convertendo para float para garantir serialização JSON
+            for feature, importance in zip(all_features, importancias)
+        }
+
+        return jsonify(features_importances), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    if colecao.count_documents({}) == 0:
+        print("Inserindo dados iniciais...")
+        dados_iniciais = gerar_dados_aleatorios(20)
+        colecao.insert_many(dados_iniciais)
+    app.run(debug=True)
