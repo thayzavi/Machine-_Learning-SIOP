@@ -18,13 +18,13 @@ db = client["meu_banco"]
 colecao = db["meus_dados"]
 
 # Carregar o pipeline e o label encoder salvos
-model_pipeline = None
-model_label_encoder = None
+modelo = None
+label_encoder = None
 try:
     with open("model.pkl", "rb") as f:
         data = pickle.load(f)
-        model_pipeline = data["pipeline"]
-        model_label_encoder = data["label_encoder"]
+        modelo = data["pipeline"]
+        label_encoder = data["label_encoder"]
     print("Modelo de ML carregado com sucesso!")
 except FileNotFoundError:
     print("Erro: model.pkl não encontrado. Execute train_model.py primeiro.")
@@ -81,11 +81,6 @@ def validar_caso_json(data):
     except:
         return False
     return True
-
-with open("model.pkl", "rb") as f:
-    data = pickle.load(f)
-    modelo = data["pipeline"]
-    label_encoder = data["label_encoder"]
 
 @app.route('/api/casos', methods=['GET'])
 def listar_casos():
